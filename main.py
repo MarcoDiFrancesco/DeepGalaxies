@@ -5,7 +5,7 @@ import os
 import csv
 
 
-def print_accuracy():
+def print_accuracy(trainer: Trainer):
     print("--- Train dataset ---")
     acc, loss, accuracy_by_label = trainer.valid_epoch(trainer.train_dl)
     _print_stats(acc, loss, accuracy_by_label)
@@ -42,7 +42,7 @@ def _print_stats(acc, loss, accuracy_by_label):
 #     print("\nDone!")
 
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "2,3"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 trainer = Trainer()
 trainer.train()
-print_accuracy()
+print_accuracy(trainer)
