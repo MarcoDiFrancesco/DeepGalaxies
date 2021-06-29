@@ -11,22 +11,26 @@ from time import strftime, gmtime
 
 
 class Trainer:
+    """
+    galaxy_names = {
+        0: "Edge-on without Bulge",
+        1: "Unbarred Tight Spiral",
+        2: "Edge-on with Bulge",
+        3: "Merging",
+        4: "In-between Round Smooth",
+        5: "Barred Spiral",
+        6: "Disturbed",
+        7: "Unbarred Loose Spiral",
+        8: "Cigar Shaped Smooth",
+        9: "Round Smooth",
+    }
+    """
+
     def __init__(self):
-        self.galaxy_names = {
-            0: "Edge-on without Bulge",
-            1: "Unbarred Tight Spiral",
-            2: "Edge-on with Bulge",
-            3: "Merging",
-            4: "In-between Round Smooth",
-            5: "Barred Spiral",
-            6: "Disturbed",
-            7: "Unbarred Loose Spiral",
-            8: "Cigar Shaped Smooth",
-            9: "Round Smooth",
-        }
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         # New model checkpoint
         self.dir_weights = Path("logs") / strftime("%Y-%m-%d %H:%M:%S", gmtime())
+        self.dir_weights.mkdir(parents=True)
         # # Old model checkpoint
         # model_path = Path("logs") / "kaggle" / "input" / "galaxies" / "model.ckpt"
         # # Load model checkpoint
@@ -34,8 +38,10 @@ class Trainer:
         #     self.model = torch.load(model_path)
         #     print("Using pre-trained weights")
         # else:
-        #     print("Training from scratch")
+        print("Training from scratch")
         self.model = Net().to(self.device)
+        # Multi gpu support
+        self.model = nn.DataParallel(self.model)
         self.lr = 1e-5
         self.loss_fn = nn.CrossEntropyLoss()
         # TODO: TRY ADAM
@@ -46,8 +52,8 @@ class Trainer:
         self.dataset = MyDataset("train")
         # Dataset 80 / 20 split
         self.train_ds, self.valid_ds = self.dataset.get_split(0.8)
-        self.train_dl = DataLoader(self.train_ds, batch_size=32, shuffle=True)
-        self.valid_dl = DataLoader(self.valid_ds, batch_size=32)
+        self.train_dl = DataLoader(self.train_ds, batch_size=64, shuffle=True)
+        self.valid_dl = DataLoader(self.valid_ds, batch_size=64)
         # Stats and Checkpoints directory
         self.losses = []
         self.accuracies = []
@@ -56,16 +62,14 @@ class Trainer:
         for epoch in range(self.epochs):
             correct_t, loss_t = self.train_epoch(self.train_dl)
             correct_v, loss_v, _ = self.valid_epoch(self.valid_dl)
-            # Save model
             torch.save(self.model, self.dir_weights / f"{epoch}.ckpt")
-            # Stats
             self.losses.append((loss_t, loss_v))
             self.accuracies.append((correct_t, correct_v))
             print(
                 f"Epoch {epoch+1:>3}/{self.epochs} - Train accuracy {correct_t:5.2f}% loss {loss_t:8f} - Valid accuracy {correct_v:5.2f}% loss {loss_v:8f}"
             )
 
-    def train_epoch(self, dl):
+    def train_epoch(self, dl: DataLoader):
         size = len(dl.dataset)
         loss_value, correct = 0, 0
         for batch, (inputs, labels) in enumerate(dl):
@@ -88,10 +92,7 @@ class Trainer:
         return accuracy, loss_value
 
     def valid_epoch(self, dl):
-        """
-        Validation function
-        """
-        # Swith layers
+        # Switch layers
         self.model.eval()
         loss, correct = 0, 0
         size_by_label = {i: 0.0 for i in range(10)}
@@ -115,21 +116,21 @@ class Trainer:
         size = len(dl.dataset)
         accuracy = (correct / size) * 100
         loss /= size
-        for key, value in correct_by_label.items():
+        for key in correct_by_label.keys():
             correct_by_label[key] /= size_by_label[key] if size_by_label[key] else 1.0
             # To percentage
             correct_by_label[key] *= 100
         return accuracy, loss, correct_by_label
 
-    def test_epoch(self, dataloader):
+    def test_epoch(self, dl):
         """
         Test function
         """
         predictions = []
         self.model.eval()
         with torch.no_grad():
-            for batch, (inputs, f_names) in enumerate(dataloader):
-                print(f"Test batch: {batch:>3}/{len(dataloader):<3}", end="\r")
+            for batch, (inputs, f_names) in enumerate(dl):
+                print(f"Test batch: {batch:>3}/{len(dl):<3}", end="\r")
                 inputs = inputs.to(self.device)
                 pred = self.model(inputs)
                 for pred, f_name in zip(pred.argmax(1), f_names):

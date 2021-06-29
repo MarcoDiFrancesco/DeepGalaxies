@@ -1,4 +1,5 @@
 .venv/
 .vscode/
-dataset/
 __pycache__/
+dataset/
+logs/
