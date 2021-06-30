@@ -88,6 +88,7 @@ class Trainer:
             loss = self.loss_fn(pred, labels)
             loss_value += loss.item()
             # Compare predictions with real values
+            # argmax: [32, 10] -> [32] taking the most likely value
             values = pred.argmax(1) == labels
             # Get how many are true
             correct += values.sum().item()
@@ -113,8 +114,8 @@ class Trainer:
                 loss += self.loss_fn(preds, labels).item()
                 # Compare predictions with real values
                 for pred, label in zip(preds.argmax(1), labels):
-                    # Tensor to int
-                    label = int(label)
+                    # Get tensor value
+                    label = label.item()
                     size_by_label[label] += 1
                     if pred == label:
                         # Compute per label accuracy

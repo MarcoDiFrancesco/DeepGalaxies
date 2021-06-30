@@ -4,6 +4,7 @@ from torch.utils.data import random_split
 from torch.utils.data.dataset import Dataset
 import numpy as np
 import imageio
+from torchvision import transforms
 
 
 class MyDataset(Dataset):
@@ -50,16 +51,31 @@ class MyDataset(Dataset):
         f, idx = self.images[index]
         array = imageio.imread(f)
         if self.ds_type == "train":
-            pass
-            # preprocess = transforms.Compose([
-            #    transforms.Resize(256),
-            #    transforms.CenterCrop(224),
-            #    transforms.ToTensor(),
-            #    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-            # ])
-            # img = preprocess(img)
-        array = np.transpose(array, (2, 0, 1))
-        array = torch.Tensor(array)
+            # transforms = transforms.Compose(
+            #     [
+            #         transforms.Resize(256),
+            #         transforms.CenterCrop(224),
+            #         transforms.ToTensor(),
+            #         transforms.Normalize(
+            #             mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+            #         ),
+            #     ]
+            # )
+            augmentation = transforms.Compose(
+                [
+                    transforms.ToTensor(),
+                    transforms.Normalize(
+                        mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+                    ),
+                    transforms.RandomRotation(degrees=(0, 180)),
+                    transforms.ColorJitter(brightness=0.5, hue=0.3),
+                ]
+            )
+            array = augmentation(array)
+        # TODO: test if this was needed
+        # array = np.transpose(array, (2, 0, 1))
+
+        # array = torch.Tensor(array)
         return array, idx
 
     def __len__(self):
