@@ -60,7 +60,10 @@ class Net(nn.Module):
 
     def forward(self, x):
         x = self.down(x)
-        # From [batch, 512, 8, 8] to [batch, 32768]
+        # [batch, 512, 8, 8] to [batch, 32768]
         x = x.reshape(x.shape[0], -1)
-        x = self.fully_connected(x)
-        return x
+        return self.fully_connected(x)
+
+    def feature_extraction(self, x):
+        x = self.down(x)
+        return x.reshape(x.shape[0], -1)

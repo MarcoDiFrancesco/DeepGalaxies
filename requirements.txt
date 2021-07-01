@@ -4,3 +4,4 @@ matplotlib
 imageio
 tensorboard
 torchvision
+tqdm

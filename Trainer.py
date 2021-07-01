@@ -9,6 +9,7 @@ from Dataset import MyDataset
 from Network import Net
 from time import strftime, gmtime
 from torch.utils.tensorboard import SummaryWriter
+from tqdm import tqdm
 
 
 class Trainer:
@@ -33,35 +34,35 @@ class Trainer:
         self.log_dir = Path("logs") / strftime("%Y-%m-%d %H:%M:%S", gmtime())
         self.log_dir.mkdir(parents=True)
         self.writer = SummaryWriter(self.log_dir)
-        # # Old model checkpoint
-        # model_path = Path("logs") / "kaggle" / "input" / "galaxies" / "model.ckpt"
-        # # Load model checkpoint
         # if os.path.isfile(model_path):
         #     self.model = torch.load(model_path)
         #     print("Using pre-trained weights")
-        # else:
-        print("Training from scratch")
         self.model = Net().to(self.device)
         # Multi gpu support
-        # DISABLED BECAUSE OF write.add_graph
-        # self.model = nn.DataParallel(self.model)
+        self.model = nn.DataParallel(self.model)
         self.lr = 1e-5
         self.loss_fn = nn.CrossEntropyLoss()
         # TODO: TRY ADAM
         self.optimizer = torch.optim.SGD(
             self.model.parameters(), lr=self.lr
         )  # weight_decay=1e-5
-        self.epochs = 50
+        self.best_accuracy = 0
+        self.epochs = 200
         self.dataset = MyDataset("train")
         # Dataset 80 / 20 split
         self.train_ds, self.valid_ds = self.dataset.get_split(0.8)
-        self.train_dl = DataLoader(self.train_ds, batch_size=32, shuffle=True)
-        self.valid_dl = DataLoader(self.valid_ds, batch_size=32)
+        self.train_dl = DataLoader(
+            self.train_ds, batch_size=32, shuffle=True, num_workers=4
+        )
+        self.valid_dl = DataLoader(self.valid_ds, batch_size=32, num_workers=4)
 
     def train(self):
         for epoch in range(self.epochs):
-            accuracy_t, loss_t = self.train_epoch(self.train_dl)
-            accuracy_v, loss_v, _ = self.valid_epoch(self.valid_dl)
+            accuracy_t, loss_t = self._train_epoch(self.train_dl)
+            accuracy_v, loss_v, _ = self._valid_epoch(self.valid_dl)
+            if self.best_accuracy < accuracy_v:
+                torch.save(self.model.state_dict(), self.log_dir / "best.pth")
+                self.best_accuracy = accuracy_v
             self.writer.add_scalars(
                 "Loss",
                 {"test": loss_v, "train": loss_t},
@@ -76,11 +77,10 @@ class Trainer:
                 f"Epoch {epoch+1:>3}/{self.epochs} - Train accuracy {accuracy_t:5.2f}% loss {loss_t:8f} - Valid accuracy {accuracy_v:5.2f}% loss {loss_v:8f}"
             )
 
-    def train_epoch(self, dl: DataLoader):
+    def _train_epoch(self, dl):
         size = len(dl.dataset)
         loss_value, correct = 0, 0
-        for batch, (images, labels) in enumerate(dl):
-            print(f"Train batch: {batch:>3}/{len(dl):<3}", end="\r")
+        for images, labels in tqdm(dl):
             images, labels = images.to(self.device), labels.to(self.device)
             self.optimizer.zero_grad()
             pred = self.model(images)
@@ -99,16 +99,14 @@ class Trainer:
         loss_value /= size
         return accuracy, loss_value
 
-    def valid_epoch(self, dl):
+    def _valid_epoch(self, dl):
         # Switch layers
         self.model.eval()
         loss, correct = 0, 0
         size_by_label = {i: 0.0 for i in range(10)}
         correct_by_label = {i: 0.0 for i in range(10)}
         with torch.no_grad():
-            # For each batch
-            for batch, (images, labels) in enumerate(dl):
-                print(f"Valid batch: {batch:>3}/{len(dl):<3}", end="\r")
+            for images, labels in tqdm(dl):
                 images, labels = images.to(self.device), labels.to(self.device)
                 preds = self.model(images)
                 loss += self.loss_fn(preds, labels).item()
@@ -125,20 +123,30 @@ class Trainer:
         accuracy = (correct / size) * 100
         loss /= size
         for key in correct_by_label.keys():
-            correct_by_label[key] /= size_by_label[key] if size_by_label[key] else 1.0
+            correct_by_label[key] /= size_by_label[key] if size_by_label[key] else 1
             # To percentage
             correct_by_label[key] *= 100
         return accuracy, loss, correct_by_label
 
     def test_epoch(self, dl):
+        """Testing without labels from pretrained model"""
         predictions = []
         self.model.eval()
         with torch.no_grad():
-            for batch, (images, labels) in enumerate(dl):
-                print(f"Test batch: {batch:>3}/{len(dl):<3}", end="\r")
+            for images, labels in tqdm(dl):
                 images = images.to(self.device)
                 preds = self.model(images)
                 for pred, label in zip(preds.argmax(1), labels):
                     pred, label = int(pred), int(label)
                     predictions.append((pred, label))
         return predictions
+
+    def extract_features(self, dl):
+        features = []
+        self.model.eval()
+        with torch.no_grad():
+            for images, _ in tqdm(dl):
+                images = images.to(self.device)
+                res = self.model.feature_extraction(images)
+                features.append(res)
+        return features
