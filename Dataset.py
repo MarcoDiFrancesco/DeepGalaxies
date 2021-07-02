@@ -1,7 +1,8 @@
 from pathlib import Path
+
+import imageio
 from torch.utils.data import random_split
 from torch.utils.data.dataset import Dataset
-import imageio
 from torchvision import transforms
 
 
@@ -22,21 +23,31 @@ class MyDataset(Dataset):
         assert ds_type in ["train", "test"]
         self.ds_type = ds_type
         self.ds_dir = Path("dataset") / ds_type
-        self.images = self._get_images()  # [:50]
+        self.images = (
+            self._get_imgs_train() if ds_type == "train" else self._get_imgs_test()
+        )
+        print(f"Dataset {ds_type} of {len(self.images)} images loaded")
 
-        print(f"Dataset of {len(self.images)} images loaded")
-
-    def _get_images(self):
+    def _get_imgs_train(self):
         images = []
-        # {Merging, Barred Spiral...}
+        # [Merging, Barred Spiral...]
         for dir in self.ds_dir.iterdir():
-            idx = 0
+            label = 0
             for key, value in self.galaxy_names.items():
                 if value == dir.stem:
-                    idx = key
+                    label = key
             # [1.png, 2.png...]
             for f in dir.iterdir():
-                images.append((f, idx))
+                images.append((f, label))
+        return images
+
+    def _get_imgs_test(self):
+        images = []
+        # [0.png, 1.png...]
+        for f in self.ds_dir.iterdir():
+            # Filename is the image number
+            idx = f.stem
+            images.append((f, idx))
         return images
 
     def get_split(self, train_len):
@@ -49,8 +60,6 @@ class MyDataset(Dataset):
         f, idx = self.images[index]
         array = imageio.imread(f)
         if self.ds_type == "train":
-            # TODO: test if this was needed
-            # array = np.transpose(array, (2, 0, 1))
             augmentation = transforms.Compose(
                 [
                     transforms.ToTensor(),
@@ -61,7 +70,13 @@ class MyDataset(Dataset):
                     # transforms.ColorJitter(brightness=0.5, hue=0.3),
                 ]
             )
-            array = augmentation(array)
+        else:
+            augmentation = transforms.Compose(
+                [
+                    transforms.ToTensor(),
+                ]
+            )
+        array = augmentation(array)
         return array, idx
 
     def __len__(self):

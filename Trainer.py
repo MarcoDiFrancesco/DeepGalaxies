@@ -28,19 +28,22 @@ class Trainer:
     }
     """
 
-    def __init__(self):
+    def __init__(self, model_path=None):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         # New model checkpoint
         self.log_dir = Path("logs") / strftime("%Y-%m-%d %H:%M:%S", gmtime())
         self.log_dir.mkdir(parents=True)
         self.writer = SummaryWriter(self.log_dir)
-        # if os.path.isfile(model_path):
-        #     self.model = torch.load(model_path)
-        #     print("Using pre-trained weights")
-        self.model = Net().to(self.device)
-        # Multi gpu support
-        self.model = nn.DataParallel(self.model)
-        self.lr = 1e-5
+
+        if model_path is not None:
+            assert os.path.isfile(model_path)
+            self.model = torch.load(model_path)
+            print("Using pre-trained weights")
+        else:
+            self.model = Net().to(self.device)
+            self.model = nn.DataParallel(self.model)
+            print("Training from scratch")
+        self.lr = 1e-3
         self.loss_fn = nn.CrossEntropyLoss()
         # TODO: TRY ADAM
         self.optimizer = torch.optim.SGD(
@@ -61,7 +64,7 @@ class Trainer:
             accuracy_t, loss_t = self._train_epoch(self.train_dl)
             accuracy_v, loss_v, _ = self._valid_epoch(self.valid_dl)
             if self.best_accuracy < accuracy_v:
-                torch.save(self.model.state_dict(), self.log_dir / "best.pth")
+                torch.save(self.model, self.log_dir / "best.pth")
                 self.best_accuracy = accuracy_v
             self.writer.add_scalars(
                 "Loss",
@@ -135,10 +138,16 @@ class Trainer:
         with torch.no_grad():
             for images, labels in tqdm(dl):
                 images = images.to(self.device)
-                preds = self.model(images)
-                for pred, label in zip(preds.argmax(1), labels):
-                    pred, label = int(pred), int(label)
-                    predictions.append((pred, label))
+                prediction = self.model(images)
+                for pred, idx in zip(prediction.argmax(1), labels):
+                    pred = pred.item()
+                    # Get name from int
+                    pred = self.dataset.galaxy_names[pred]
+                    # String to int to sort correctly
+                    idx = int(idx)
+                    predictions.append((idx, pred))
+        # Sort by filename
+        predictions = sorted(predictions, key=lambda x: x[0])
         return predictions
 
     def extract_features(self, dl):

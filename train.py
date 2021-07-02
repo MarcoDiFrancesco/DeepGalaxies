@@ -23,25 +23,6 @@ def _print_stats(acc, loss, accuracy_by_label):
         print(f"- {value:5.1f}% <- {galaxy_name}")
 
 
-# def make_test():
-#     dataset = MyDataset("test")
-#     test_dl = DataLoader(dataset, batch_size=32)
-#     predictions = trainer.test_epoch(test_dl)
-#     predictions_new = []
-#     for pred, f_name in predictions:
-#         # From 5 to Barred Spiral
-#         pred = trainer.dataset.galaxy_names[pred]
-#         predictions_new.append((f_name, pred))
-
-#     # Sort by filename
-#     predictions_new = sorted(predictions_new, key=lambda x: x[0])
-
-#     with open("output.csv", "w", newline="") as file:
-#         writer = csv.writer(file)
-#         writer.writerows(predictions_new)
-#     print("\nDone!")
-
-
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 trainer = Trainer()
 trainer.train()
