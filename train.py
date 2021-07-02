@@ -1,8 +1,5 @@
 from Trainer import Trainer
-from matplotlib import pyplot as plt
-import numpy as np
 import os
-import csv
 
 
 def print_accuracy(trainer: Trainer):
@@ -23,7 +20,7 @@ def _print_stats(acc, loss, accuracy_by_label):
         print(f"- {value:5.1f}% <- {galaxy_name}")
 
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 trainer = Trainer()
 trainer.train()
 print_accuracy(trainer)

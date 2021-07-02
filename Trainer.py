@@ -6,7 +6,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 
 from Dataset import MyDataset
-from Network import Net
+from Network import Net, NetFeatureExtractor
 from time import strftime, gmtime
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
@@ -28,22 +28,23 @@ class Trainer:
     }
     """
 
-    def __init__(self, model_path=None):
+    def __init__(self, model_path: Path = None, feature_extraction=False):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         # New model checkpoint
         self.log_dir = Path("logs") / strftime("%Y-%m-%d %H:%M:%S", gmtime())
         self.log_dir.mkdir(parents=True)
         self.writer = SummaryWriter(self.log_dir)
-
-        if model_path is not None:
-            assert os.path.isfile(model_path)
-            self.model = torch.load(model_path)
-            print("Using pre-trained weights")
+        if feature_extraction:
+            self.model = NetFeatureExtractor()
         else:
-            self.model = Net().to(self.device)
-            self.model = nn.DataParallel(self.model)
-            print("Training from scratch")
-        self.lr = 1e-3
+            self.model = Net()
+        self.model = self.model.to(self.device)
+        self.model = nn.DataParallel(self.model)
+        if model_path is not None:
+            assert os.path.isfile(model_path), "Checkpoint not existing"
+            self.model.load_state_dict(torch.load(model_path))
+            print("Using pre-trained weights")
+        self.lr = 1e-4
         self.loss_fn = nn.CrossEntropyLoss()
         # TODO: TRY ADAM
         self.optimizer = torch.optim.SGD(
@@ -62,9 +63,9 @@ class Trainer:
     def train(self):
         for epoch in range(self.epochs):
             accuracy_t, loss_t = self._train_epoch(self.train_dl)
-            accuracy_v, loss_v, _ = self._valid_epoch(self.valid_dl)
+            accuracy_v, loss_v, _ = self.valid_epoch(self.valid_dl)
             if self.best_accuracy < accuracy_v:
-                torch.save(self.model, self.log_dir / "best.pth")
+                torch.save(self.model.state_dict(), self.log_dir / "best.pth")
                 self.best_accuracy = accuracy_v
             self.writer.add_scalars(
                 "Loss",
@@ -102,7 +103,7 @@ class Trainer:
         loss_value /= size
         return accuracy, loss_value
 
-    def _valid_epoch(self, dl):
+    def valid_epoch(self, dl):
         # Switch layers
         self.model.eval()
         loss, correct = 0, 0

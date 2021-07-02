@@ -64,6 +64,10 @@ class Net(nn.Module):
         x = x.reshape(x.shape[0], -1)
         return self.fully_connected(x)
 
-    def feature_extraction(self, x):
+
+class NetFeatureExtractor(Net):
+    """Override forward without final linear layers"""
+
+    def forward(self, x):
         x = self.down(x)
         return x.reshape(x.shape[0], -1)
