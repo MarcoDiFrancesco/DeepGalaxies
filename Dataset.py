@@ -4,6 +4,10 @@ import imageio
 from torch.utils.data import random_split
 from torch.utils.data.dataset import Dataset
 from torchvision import transforms
+import shutil
+import random
+import os
+from tqdm import tqdm
 
 
 class MyDataset(Dataset):
@@ -20,13 +24,37 @@ class MyDataset(Dataset):
             8: "Cigar Shaped Smooth",
             9: "Round Smooth",
         }
-        assert ds_type in ["train", "test"]
+        assert ds_type in ["train", "validation", "test"]
         self.ds_type = ds_type
-        self.ds_dir = Path("dataset") / ds_type
-        self.images = (
-            self._get_imgs_train() if ds_type == "train" else self._get_imgs_test()
-        )
+        self._generate_dataset()
+        self.ds_dir = Path("dataset_generated") / ds_type
+        if ds_type == "train" or ds_type == "validation":
+            self.images = self._get_imgs_train()
+        else:
+            self.images = self._get_imgs_test()
         print(f"Dataset {ds_type} of {len(self.images)} images loaded")
+
+    def _generate_dataset(self):
+        """Genrate"""
+        ds_from = Path("dataset")
+        ds_to = Path("dataset_generated")
+        if ds_to.exists():
+            return
+        ds_to.mkdir()
+        shutil.copytree(ds_from / "test", ds_to / "test")
+        os.mkdir(ds_to / "train")
+        os.mkdir(ds_to / "validation")
+        for galaxy in self.galaxy_names.values():
+            galaxy_dir = ds_from / "train" / galaxy
+            os.makedirs(ds_to / "train" / galaxy, exist_ok=True)
+            os.makedirs(ds_to / "validation" / galaxy, exist_ok=True)
+            for pic in galaxy_dir.iterdir():
+                shutil.copy2(
+                    pic,
+                    ds_to / "train" / galaxy / pic.name
+                    if random.random() < 0.8
+                    else ds_to / "validation" / galaxy / pic.name,
+                )
 
     def _get_imgs_train(self):
         images = []
@@ -50,10 +78,10 @@ class MyDataset(Dataset):
             images.append((f, idx))
         return images
 
-    def get_split(self, train_len):
-        train_len = int(train_len * len(self))
-        valid_len = len(self) - train_len
-        return random_split(self, [train_len, valid_len])
+    # def get_split(self, train_len):
+    #     train_len = int(train_len * len(self))
+    #     valid_len = len(self) - train_len
+    #     return random_split(self, [train_len, valid_len])
 
     def __getitem__(self, index):
         # For test idx is galaxy (from 0 to 9)

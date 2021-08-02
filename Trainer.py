@@ -31,7 +31,12 @@ class Trainer:
     def __init__(self, model_path: Path = None, feature_extraction=False):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         # New model checkpoint
-        self.log_dir = Path("logs") / strftime("%Y-%m-%d %H:%M:%S", gmtime())
+        self.log_dir = (
+            Path("/")
+            / "thunderdisk"
+            / "data_rene_policistico_log"
+            / strftime("%Y-%m-%d %H:%M:%S", gmtime())
+        )
         self.log_dir.mkdir(parents=True)
         self.writer = SummaryWriter(self.log_dir)
         if feature_extraction:
@@ -41,32 +46,31 @@ class Trainer:
         self.model = self.model.to(self.device)
         self.model = nn.DataParallel(self.model)
         if model_path is not None:
-            assert os.path.isfile(model_path), "Checkpoint not existing"
+            assert model_path.exists(), f"Checkpoint does not exist: {model_path}"
             self.model.load_state_dict(torch.load(model_path))
             print("Using pre-trained weights")
         self.lr = 1e-4
         self.loss_fn = nn.CrossEntropyLoss()
-        # TODO: TRY ADAM
         self.optimizer = torch.optim.SGD(
             self.model.parameters(), lr=self.lr
         )  # weight_decay=1e-5
-        self.best_accuracy = 0
-        self.epochs = 200
-        self.dataset = MyDataset("train")
-        # Dataset 80 / 20 split
-        self.train_ds, self.valid_ds = self.dataset.get_split(0.8)
+        self.epochs = 1000
+        self.train_ds, self.valid_ds = MyDataset("train"), MyDataset("validation")
+        batch_size = 96
+        num_workers = 2
         self.train_dl = DataLoader(
-            self.train_ds, batch_size=32, shuffle=True, num_workers=4
+            self.train_ds, batch_size=batch_size, shuffle=True, num_workers=num_workers
         )
-        self.valid_dl = DataLoader(self.valid_ds, batch_size=32, num_workers=4)
+        self.valid_dl = DataLoader(
+            self.valid_ds, batch_size=batch_size, num_workers=num_workers
+        )
 
     def train(self):
         for epoch in range(self.epochs):
             accuracy_t, loss_t = self._train_epoch(self.train_dl)
             accuracy_v, loss_v, _ = self.valid_epoch(self.valid_dl)
-            if self.best_accuracy < accuracy_v:
-                torch.save(self.model.state_dict(), self.log_dir / "best.pth")
-                self.best_accuracy = accuracy_v
+            if epoch % 5 == 0:
+                torch.save(self.model.state_dict(), self.log_dir / f"{epoch}.pth")
             self.writer.add_scalars(
                 "Loss",
                 {"test": loss_v, "train": loss_t},
