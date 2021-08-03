@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from matplotlib.pyplot import axis
 
 import torch
 from torch import nn
@@ -10,27 +11,12 @@ from Network import Net, NetFeatureExtractor
 from time import strftime, gmtime
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
+import numpy as np
 
 
 class Trainer:
-    """
-    galaxy_names = {
-        0: "Edge-on without Bulge",
-        1: "Unbarred Tight Spiral",
-        2: "Edge-on with Bulge",
-        3: "Merging",
-        4: "In-between Round Smooth",
-        5: "Barred Spiral",
-        6: "Disturbed",
-        7: "Unbarred Loose Spiral",
-        8: "Cigar Shaped Smooth",
-        9: "Round Smooth",
-    }
-    """
-
     def __init__(self, model_path: Path = None, feature_extraction=False):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        # New model checkpoint
         self.log_dir = (
             Path("/")
             / "thunderdisk"
@@ -56,10 +42,10 @@ class Trainer:
         )  # weight_decay=1e-5
         self.epochs = 1000
         self.train_ds, self.valid_ds = MyDataset("train"), MyDataset("validation")
-        batch_size = 96
+        batch_size = 64
         num_workers = 2
         self.train_dl = DataLoader(
-            self.train_ds, batch_size=batch_size, shuffle=True, num_workers=num_workers
+            self.train_ds, batch_size=batch_size, num_workers=num_workers, shuffle=True
         )
         self.valid_dl = DataLoader(
             self.valid_ds, batch_size=batch_size, num_workers=num_workers
@@ -86,7 +72,6 @@ class Trainer:
             )
 
     def _train_epoch(self, dl):
-        size = len(dl.dataset)
         loss_value, correct = 0, 0
         for images, labels in tqdm(dl):
             images, labels = images.to(self.device), labels.to(self.device)
@@ -103,6 +88,7 @@ class Trainer:
             # Backpropagation
             loss.backward()
             self.optimizer.step()
+        size = len(dl.dataset)
         accuracy = (correct / size) * 100
         loss_value /= size
         return accuracy, loss_value
@@ -157,10 +143,18 @@ class Trainer:
 
     def extract_features(self, dl):
         features = []
+        labels = []
         self.model.eval()
         with torch.no_grad():
-            for images, _ in tqdm(dl):
+            for images, l in tqdm(dl):
                 images = images.to(self.device)
-                res = self.model.feature_extraction(images)
-                features.append(res)
-        return features
+                res = self.model(images)
+                # [batch, 32768]
+                features.append(res.cpu())
+                labels.append(l)
+        # From [iters, batch, 32768]
+        # To [iters*batch, 32768]
+        features = np.vstack(features)
+        # From [iters, batch] to [iters*batch]
+        labels = np.concatenate(labels)
+        return features, labels

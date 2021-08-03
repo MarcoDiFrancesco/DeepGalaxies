@@ -6,9 +6,8 @@ import os
 import csv
 
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "3"
+os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 dataset = MyDataset("test")
-# dataset.images = dataset.images[:100]
 dl = DataLoader(dataset, batch_size=32)
 model_path = Path("logs") / "2021-07-01 16:05:16" / "best.pth"
 trainer = Trainer(model_path)

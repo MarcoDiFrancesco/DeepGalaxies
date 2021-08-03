@@ -7,7 +7,6 @@ from torchvision import transforms
 import shutil
 import random
 import os
-from tqdm import tqdm
 
 
 class MyDataset(Dataset):
@@ -35,7 +34,6 @@ class MyDataset(Dataset):
         print(f"Dataset {ds_type} of {len(self.images)} images loaded")
 
     def _generate_dataset(self):
-        """Genrate"""
         ds_from = Path("dataset")
         ds_to = Path("dataset_generated")
         if ds_to.exists():
@@ -78,11 +76,6 @@ class MyDataset(Dataset):
             images.append((f, idx))
         return images
 
-    # def get_split(self, train_len):
-    #     train_len = int(train_len * len(self))
-    #     valid_len = len(self) - train_len
-    #     return random_split(self, [train_len, valid_len])
-
     def __getitem__(self, index):
         # For test idx is galaxy (from 0 to 9)
         f, idx = self.images[index]
@@ -91,11 +84,11 @@ class MyDataset(Dataset):
             augmentation = transforms.Compose(
                 [
                     transforms.ToTensor(),
-                    transforms.Normalize(
-                        mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
-                    ),
+                    # transforms.Normalize(
+                    #     mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+                    # ),
                     transforms.RandomRotation(degrees=(0, 180)),
-                    transforms.ColorJitter(brightness=0.5, hue=0.3),
+                    # transforms.ColorJitter(brightness=0.5, hue=0.3),
                 ]
             )
         else:

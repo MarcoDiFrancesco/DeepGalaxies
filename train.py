@@ -20,7 +20,7 @@ def _print_stats(acc: float, loss: float, accuracy_by_label: dict):
         print(f"- {value:5.1f}% <- {galaxy_name}")
 
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
 trainer = Trainer()
 trainer.train()
 print_accuracy(trainer)

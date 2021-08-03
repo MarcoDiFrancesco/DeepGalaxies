@@ -5,3 +5,5 @@ imageio
 tensorboard
 torchvision
 tqdm
+umap-learn
+seaborn
