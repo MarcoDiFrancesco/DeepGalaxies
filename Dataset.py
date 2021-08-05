@@ -63,6 +63,7 @@ class MyDataset(Dataset):
                 if value == dir.stem:
                     label = key
             # [1.png, 2.png...]
+            # for f in list(dir.iterdir())[:50]:
             for f in dir.iterdir():
                 images.append((f, label))
         return images
@@ -88,7 +89,7 @@ class MyDataset(Dataset):
                     #     mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
                     # ),
                     transforms.RandomRotation(degrees=(0, 180)),
-                    # transforms.ColorJitter(brightness=0.5, hue=0.3),
+                    transforms.ColorJitter(brightness=0.5, hue=0.3),
                 ]
             )
         else:

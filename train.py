@@ -1,5 +1,6 @@
 from Trainer import Trainer
 import os
+from pathlib import Path
 
 
 def print_accuracy(trainer: Trainer):
@@ -21,6 +22,13 @@ def _print_stats(acc: float, loss: float, accuracy_by_label: dict):
 
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
-trainer = Trainer()
+model_path = (
+    Path("/")
+    / "thunderdisk"
+    / "data_rene_policistico_log"
+    / "2021-08-04 11:36:30"
+    / "90.pth"
+)
+trainer = Trainer(model_path)
 trainer.train()
 print_accuracy(trainer)

@@ -35,11 +35,11 @@ class Trainer:
             assert model_path.exists(), f"Checkpoint does not exist: {model_path}"
             self.model.load_state_dict(torch.load(model_path))
             print("Using pre-trained weights")
-        self.lr = 1e-4
+        self.lr = 3e-4
         self.loss_fn = nn.CrossEntropyLoss()
         self.optimizer = torch.optim.SGD(
-            self.model.parameters(), lr=self.lr
-        )  # weight_decay=1e-5
+            self.model.parameters(), lr=self.lr, weight_decay=1e-5
+        )
         self.epochs = 1000
         self.train_ds, self.valid_ds = MyDataset("train"), MyDataset("validation")
         batch_size = 64
