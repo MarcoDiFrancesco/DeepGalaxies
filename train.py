@@ -21,14 +21,14 @@ def _print_stats(acc: float, loss: float, accuracy_by_label: dict):
         print(f"- {value:5.1f}% <- {galaxy_name}")
 
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "2,3"
 model_path = (
     Path("/")
     / "thunderdisk"
     / "data_rene_policistico_log"
-    / "2021-08-04 11:36:30"
+    / "2021-08-23 07:21:09"
     / "90.pth"
 )
-trainer = Trainer(model_path)
+trainer = Trainer()
 trainer.train()
 print_accuracy(trainer)

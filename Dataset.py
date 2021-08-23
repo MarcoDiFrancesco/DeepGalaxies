@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import imageio
-from torch.utils.data import random_split
 from torch.utils.data.dataset import Dataset
 from torchvision import transforms
 import shutil
@@ -90,6 +89,9 @@ class MyDataset(Dataset):
                     # ),
                     transforms.RandomRotation(degrees=(0, 180)),
                     transforms.ColorJitter(brightness=0.5, hue=0.3),
+                    transforms.RandomAutocontrast(),
+                    transforms.RandomVerticalFlip(p=0.5),
+                    transforms.RandomHorizontalFlip(p=0.5),
                 ]
             )
         else:

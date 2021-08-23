@@ -28,21 +28,24 @@ class Trainer:
         if feature_extraction:
             self.model = NetFeatureExtractor()
         else:
-            self.model = Net()
+            # self.model = Net()
+            self.model = torch.hub.load(
+                "pytorch/vision:v0.10.0", "resnet50", pretrained=True
+            )
         self.model = self.model.to(self.device)
         self.model = nn.DataParallel(self.model)
         if model_path is not None:
             assert model_path.exists(), f"Checkpoint does not exist: {model_path}"
             self.model.load_state_dict(torch.load(model_path))
             print("Using pre-trained weights")
-        self.lr = 3e-4
+        self.lr = 1e-4
         self.loss_fn = nn.CrossEntropyLoss()
         self.optimizer = torch.optim.SGD(
             self.model.parameters(), lr=self.lr, weight_decay=1e-5
         )
         self.epochs = 1000
         self.train_ds, self.valid_ds = MyDataset("train"), MyDataset("validation")
-        batch_size = 64
+        batch_size = 128
         num_workers = 2
         self.train_dl = DataLoader(
             self.train_ds, batch_size=batch_size, num_workers=num_workers, shuffle=True
@@ -55,7 +58,7 @@ class Trainer:
         for epoch in range(self.epochs):
             accuracy_t, loss_t = self._train_epoch(self.train_dl)
             accuracy_v, loss_v, _ = self.valid_epoch(self.valid_dl)
-            if epoch % 5 == 0:
+            if epoch % 1 == 0:  # 5
                 torch.save(self.model.state_dict(), self.log_dir / f"{epoch}.pth")
             self.writer.add_scalars(
                 "Loss",
@@ -133,7 +136,7 @@ class Trainer:
                 for pred, idx in zip(prediction.argmax(1), labels):
                     pred = pred.item()
                     # Get name from int
-                    pred = self.dataset.galaxy_names[pred]
+                    pred = dl.dataset.galaxy_names[pred]
                     # String to int to sort correctly
                     idx = int(idx)
                     predictions.append((idx, pred))

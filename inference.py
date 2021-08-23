@@ -9,7 +9,13 @@ import csv
 os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 dataset = MyDataset("test")
 dl = DataLoader(dataset, batch_size=32)
-model_path = Path("logs") / "2021-07-01 16:05:16" / "best.pth"
+model_path = (
+    Path("/")
+    / "thunderdisk"
+    / "data_rene_policistico_log"
+    / "2021-08-23 07:21:09"
+    / "90.pth"
+)
 trainer = Trainer(model_path)
 predictions = trainer.test_epoch(dl)
 with open("output.csv", "w", newline="") as file:

@@ -7,3 +7,4 @@ torchvision
 tqdm
 umap-learn
 seaborn
+torchvision
