@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 from matplotlib.pyplot import axis
 
@@ -26,7 +25,8 @@ class Trainer:
         self.log_dir.mkdir(parents=True)
         self.writer = SummaryWriter(self.log_dir)
         if feature_extraction:
-            self.model = NetFeatureExtractor()
+            # self.model = NetFeatureExtractor()
+            self.model = torch.hub.load("pytorch/vision:v0.10.0", "resnet50")
         else:
             # self.model = Net()
             self.model = torch.hub.load(
@@ -38,6 +38,10 @@ class Trainer:
             assert model_path.exists(), f"Checkpoint does not exist: {model_path}"
             self.model.load_state_dict(torch.load(model_path))
             print("Using pre-trained weights")
+        if feature_extraction:
+            print("Removing layer", list(self.model.module.children())[-1])
+            self.model.module = nn.Sequential(*list(self.model.module.children())[:-1])
+
         self.lr = 1e-4
         self.loss_fn = nn.CrossEntropyLoss()
         self.optimizer = torch.optim.SGD(
@@ -45,6 +49,11 @@ class Trainer:
         )
         self.epochs = 1000
         self.train_ds, self.valid_ds = MyDataset("train"), MyDataset("validation")
+
+        # DEBUG: take only the first images
+        # self.train_ds.images = self.train_ds.images[:200]
+        # self.valid_ds.images = self.valid_ds.images[:200]
+
         batch_size = 128
         num_workers = 2
         self.train_dl = DataLoader(

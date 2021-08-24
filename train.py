@@ -4,6 +4,11 @@ from pathlib import Path
 
 
 def print_accuracy(trainer: Trainer):
+    """Print 3 metrics given a Trainer: accuracy, loss, label-wise accuracy
+
+    Args:
+        trainer (Trainer): [description]
+    """
     print("--- Train dataset ---")
     acc, loss, accuracy_by_label = trainer.valid_epoch(trainer.train_dl)
     _print_stats(acc, loss, accuracy_by_label)
@@ -12,8 +17,14 @@ def print_accuracy(trainer: Trainer):
     _print_stats(acc, loss, accuracy_by_label)
 
 
-# Print train and validation perfornces by galaxy
 def _print_stats(acc: float, loss: float, accuracy_by_label: dict):
+    """Print train and validation performances by galaxy
+
+    Args:
+        acc (float): accuracy
+        loss (float): loss
+        accuracy_by_label (dict): accuracy by label
+    """
     print(f"Accuracy {acc:.2f}%    ")
     print(f"Loss {loss:8f}")
     for key, value in accuracy_by_label.items():
