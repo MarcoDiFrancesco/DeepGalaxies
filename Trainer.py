@@ -14,7 +14,16 @@ import numpy as np
 
 
 class Trainer:
+    """Class that contains all the code necessary to train a network"""
+
     def __init__(self, model_path: Path = None, feature_extraction=False):
+        """Initalize class
+
+        Args:
+            model_path (Path, optional): Path of the weights to be preloaded. Defaults to None.
+            feature_extraction (bool, optional): Remove the last layer to
+            extract feature. Defaults to False.
+        """
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.log_dir = (
             Path("/")
@@ -54,7 +63,7 @@ class Trainer:
         # self.train_ds.images = self.train_ds.images[:200]
         # self.valid_ds.images = self.valid_ds.images[:200]
 
-        batch_size = 128
+        batch_size = 1024
         num_workers = 2
         self.train_dl = DataLoader(
             self.train_ds, batch_size=batch_size, num_workers=num_workers, shuffle=True
