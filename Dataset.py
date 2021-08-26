@@ -33,6 +33,9 @@ class MyDataset(Dataset):
         print(f"Dataset {ds_type} of {len(self.images)} images loaded")
 
     def _generate_dataset(self):
+        """Takes images from dataset directory and splits the images in
+        dataset_generated/train and dataset_generated/validation
+        """
         ds_from = Path("dataset")
         ds_to = Path("dataset_generated")
         if ds_to.exists():
@@ -54,6 +57,11 @@ class MyDataset(Dataset):
                 )
 
     def _get_imgs_train(self):
+        """List all image from the dataset train and validation directory
+
+        Returns:
+            list: tuples with path to image and label
+        """
         images = []
         # [Merging, Barred Spiral...]
         for dir in self.ds_dir.iterdir():
@@ -68,6 +76,12 @@ class MyDataset(Dataset):
         return images
 
     def _get_imgs_test(self):
+        """List all image from the dataset test directory
+
+        Returns:
+            list: tuples with path to image and image number
+        """
+
         images = []
         # [0.png, 1.png...]
         for f in self.ds_dir.iterdir():
@@ -77,6 +91,15 @@ class MyDataset(Dataset):
         return images
 
     def __getitem__(self, index):
+        """Gets picture and apply augmentation if in train epoch
+
+        Args:
+            index (int): image index in the dataloader
+
+        Returns:
+            tuple: picture array and label (image number for test)
+        """
+
         # For test idx is galaxy (from 0 to 9)
         f, idx = self.images[index]
         array = imageio.imread(f)

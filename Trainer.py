@@ -73,6 +73,7 @@ class Trainer:
         )
 
     def train(self):
+        """Train network in a set number of epochs, write the values in tensorboard"""
         for epoch in range(self.epochs):
             accuracy_t, loss_t = self._train_epoch(self.train_dl)
             accuracy_v, loss_v, _ = self.valid_epoch(self.valid_dl)
@@ -93,6 +94,15 @@ class Trainer:
             )
 
     def _train_epoch(self, dl):
+        """Train epoch where the loss is computer considering the number of
+        correcly classified elements
+
+        Args:
+            dl (DataLoader): train dataloader
+
+        Returns:
+            tuple: (accuracy in percentage, loss value)
+        """
         loss_value, correct = 0, 0
         for images, labels in tqdm(dl):
             images, labels = images.to(self.device), labels.to(self.device)
@@ -115,6 +125,15 @@ class Trainer:
         return accuracy, loss_value
 
     def valid_epoch(self, dl):
+        """Validation epoch where the loss is computer considering the number of
+        correcly classified elements
+
+        Args:
+            dl (DataLoader): train dataloader
+
+        Returns:
+            tuple: (accuracy in percentage, loss value)
+        """
         # Switch layers
         self.model.eval()
         loss, correct = 0, 0
@@ -163,6 +182,14 @@ class Trainer:
         return predictions
 
     def extract_features(self, dl):
+        """Compute features for each image of a give dataset
+
+        Args:
+            dl (DataLoader): dataloader containing all the pictures
+
+        Returns:
+            tuple: list with features and its corresponding labels
+        """
         features = []
         labels = []
         self.model.eval()

@@ -3,6 +3,12 @@ from torch import nn
 
 class Operation(nn.Module):
     def __init__(self, in_channels, out_channels):
+        """Operation with convolution + batchnorm + relu
+
+        Args:
+            in_channels (int): in channels
+            out_channels (int): out channels
+        """
         super().__init__()
         self.conv = nn.Conv2d(
             in_channels=in_channels,
@@ -23,6 +29,7 @@ class Operation(nn.Module):
 
 class Net(nn.Module):
     def __init__(self):
+        """Reimplementation of VGG16 with some improvements"""
         super().__init__()
         in_channels = 3
         out_channels = 10
@@ -66,7 +73,7 @@ class Net(nn.Module):
 
 
 class NetFeatureExtractor(Net):
-    """Override forward without final linear layers"""
+    """Override forward to remove final linear layers"""
 
     def forward(self, x):
         x = self.down(x)
