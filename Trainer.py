@@ -63,7 +63,7 @@ class Trainer:
         # self.train_ds.images = self.train_ds.images[:200]
         # self.valid_ds.images = self.valid_ds.images[:200]
 
-        batch_size = 1024
+        batch_size = 512
         num_workers = 2
         self.train_dl = DataLoader(
             self.train_ds, batch_size=batch_size, num_workers=num_workers, shuffle=True
