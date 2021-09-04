@@ -14,7 +14,6 @@ Everything started building a dataset with the 32x32 pixels in the middle of eac
 
 ## Network
 
-
 The network was then rebuilt taking inspiration from VGG, using its main structure and adapted it to the given dataset and later added a few improvements. More in detail it was built in such a way that the outputs were the 10 float values normalized from 0 to 1, equivalent to the likelihood of each image belonging to a galaxy type.
 
 In detail the first part of the network is built by 4 sequential operation, each containing: a convolution, with kernel 3x3, stride 1, padding 1, so that it's possible to exactly halve the dimension of the image; the batch normalization, used to normalize the inputs of the layer by re-centering them, to get a faster training. After that there are 2 fully connected layer with RELU that take the input tensor of 512 * 8 * 8 down to 4086, and then down to 10 channels, where we get the final predictions. Moreover, the fully connected layers had random dropout with 50% chance, meaning that around half of the neuron (feature detectors) were set to 0, allowing to reduce overfitting.
