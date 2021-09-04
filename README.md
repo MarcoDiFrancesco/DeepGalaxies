@@ -4,33 +4,20 @@ The project was developed by Marco Di Francesco for the Machine Learning course 
 
 ## First steps
 
-<table>
-  <tr>
-    <td width="60%">
-      The project was built with the goal of understanding each piece of the process of a deep learning algorithm, so everything started really simple and then complexity was added step by step in order to understand what really made the difference in performance.
-      <br />
-      Everything started building a dataset with the 32x32 pixels in the middle of each picture, creating a really simple network consisting of 2 operations, each one containing a convolution and a max pooling operation.This model ran with 1000 epochs and got around 62.4% of accuracy ([notebook](https://www.kaggle.com/marcodifrancesco/mygalaxies?scriptVersionId=60499266)).
-    </td>
-    <td>
-      <img src="https://i.imgur.com/Yf222mh.png" />
-    </td>
-  </tr>
-</table>
+The project was built with the goal of understanding each piece of the process of a deep learning algorithm, so everything started really simple and then complexity was added step by step in order to understand what really made the difference in performance.
+
+Everything started building a dataset with the 32x32 pixels in the middle of each picture, creating a really simple network consisting of 2 operations, each one containing a convolution and a max pooling operation.This model ran with 1000 epochs and got around 62.4% of accuracy [notebook](https://www.kaggle.com/marcodifrancesco/mygalaxies?scriptVersionId=60499266).
+
+<p align="center">
+  <img src="https://i.imgur.com/Yf222mh.png" width=400 />
+</p>
 
 ## Network
 
-<table>
- <tr>
-    <td width="87%">
-      The network was then rebuilt taking inspiration from VGG, using its main structure and adapted it to the given dataset and later added a few improvements. More in detail it was built in such a way that the outputs were the 10 float values normalized from 0 to 1, equivalent to the likelihood of each image belonging to a galaxy type.
-      <br />
-      In detail the first part of the network is built by 4 sequential operation, each containing: a convolution, with kernel 3x3, stride 1, padding 1, so that it's possible to exactly halve the dimension of the image; the batch normalization, used to normalize the inputs of the layer by re-centering them, to get a faster training. After that there are 2 fully connected layer with RELU that take the input tensor of 512 * 8 * 8 down to 4086, and then down to 10 channels, where we get the final predictions. Moreover, the fully connected layers had random dropout with 50% chance, meaning that around half of the neuron (feature detectors) were set to 0, allowing to reduce overfitting.
-    </td>
-    <td>
-      <img width=800 src="https://i.imgur.com/v5e3vJG.png" />
-    </td>
- </tr>
-</table>
+
+The network was then rebuilt taking inspiration from VGG, using its main structure and adapted it to the given dataset and later added a few improvements. More in detail it was built in such a way that the outputs were the 10 float values normalized from 0 to 1, equivalent to the likelihood of each image belonging to a galaxy type.
+
+In detail the first part of the network is built by 4 sequential operation, each containing: a convolution, with kernel 3x3, stride 1, padding 1, so that it's possible to exactly halve the dimension of the image; the batch normalization, used to normalize the inputs of the layer by re-centering them, to get a faster training. After that there are 2 fully connected layer with RELU that take the input tensor of 512 * 8 * 8 down to 4086, and then down to 10 channels, where we get the final predictions. Moreover, the fully connected layers had random dropout with 50% chance, meaning that around half of the neuron (feature detectors) were set to 0, allowing to reduce overfitting.
 
 ## Parameters and metrics
 
@@ -81,9 +68,6 @@ Dimensionality reduction techniques were used to visualize the image correlation
     <td><img src='https://i.imgur.com/8Sls5jU.png' width=350 /></td>
     <td><img src='https://i.imgur.com/RNeUsK6.png' width=350 /></td>
   </tr>
-</table>
-
-<table style="margin: 0px auto;">
   <tr>
     <th>UMAP CUSTOM NET VALIDATION</th>
     <th>TSNE CUSTOM NET VALIDATION</th>
